@@ -54,7 +54,7 @@ const updateCards = asyncHandler(async (req, res) => {
                     updatedCards.push(oldCard);
                 }
             } else {
-                updatedCards.push(card);
+                updatedCards.push(oldCard);
             }
         })
 

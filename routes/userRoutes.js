@@ -3,7 +3,7 @@ const router = express.Router();
 const {protect} = require('../middleware/authMiddleware')
 const {registerUser, loginUser, getMe} = require('../controllers/userController')
 const {getCards, updateCards} = require('../controllers/userCardsController')
-const {getDecks, createDeck, updateDecks} = require('../controllers/userDecksController')
+const {getDecks, createDeck, updateDeck} = require('../controllers/userDecksController')
 
 // From /api/users
 router.post('/', registerUser);
@@ -17,6 +17,6 @@ router.route('/cards')
 router.route('/decks')
     .get(protect, getDecks)
     .post(protect, createDeck)
-    .put(protect, updateDecks);
+    .put(protect, updateDeck);
 
 module.exports = router;
