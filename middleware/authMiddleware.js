@@ -14,8 +14,11 @@ const protect = asyncHandler(async (req, res, next) => {
             // Decode token to retrieve user id
             const decoded = jwt.verify(token, process.env.FAKE_KEY)
 
+            
             // Verify if user with this id still exists
             let isExist = await User.exists({'_id': decoded.id})
+            
+            
             if (isExist) {
                 req.user = decoded.id
                 next()

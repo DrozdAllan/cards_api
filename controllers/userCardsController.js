@@ -1,6 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
-const {cardModel} = require('../models/cardModel');
+const {compareCards} = require('../services/cardsComparator');
 
 // @desc    Get the user's cards
 // @route   GET /api/users/cards
@@ -20,54 +20,8 @@ const getCards = asyncHandler(async (req, res) => {
 // @example {"cards": [{"id": Number, "qty": Number}]}
 const updateCards = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user).select('cards');
-    let updatedCards = [];
 
-    // NOTES: si la qty est négative ça déduit
-    // ATTENTION : si y a 2x le même id dans la requête ça inscrit 2x la même carte dans la DB
-    const newCards = req.body.cards;
-
-    // retrieve user's cards
-    const oldCards = user.cards;
-
-    // if user had no cards, add everything
-    if (!oldCards.length) {
-        for (const newCard of newCards) {
-            // verify if input has 0 or less qty when there's no card
-            if (newCard['qty'] > 0) {
-                // for each newCard id, find the card model and add qty
-                const requestCard = await cardModel.findOne({
-                    _id: {$in: newCard['id']}
-                });
-                requestCard['quantity'] = newCard['qty'];
-                updatedCards.push(requestCard);
-            }
-        }
-    } else {
-        oldCards.forEach((oldCard) => {
-            let cardFound = newCards.find(card => card.id === oldCard._id);
-            if (cardFound) {
-                const newQty = oldCard.quantity + cardFound['qty'];
-                const index = newCards.indexOf(cardFound);
-                newCards.splice(index, 1);
-                if (newQty > 0) {
-                    oldCard.quantity = newQty;
-                    updatedCards.push(oldCard);
-                }
-            } else {
-                updatedCards.push(oldCard);
-            }
-        })
-
-        for (const newCard of newCards) {
-            if (newCard && newCard.qty > 0) {
-                const requestCard = await cardModel.findOne({
-                    _id: {$in: newCard['id']}
-                });
-                requestCard['quantity'] = newCard['qty'];
-                updatedCards.push(requestCard);
-            }
-        }
-    }
+    const updatedCards = await compareCards(user.cards, req.body.cards);
 
     // update user's cards and save user
     user.cards = updatedCards;

@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 const connectDB = async () => {
     mongoose.set("strictQuery", false);
     try {
-        const conn = await mongoose.connect('mongodb://127.0.0.1:27017/bigeye')
+        const conn = await mongoose.connect('mongodb://127.0.0.1:27017/cards_api')
 
         console.log(`MongoDB connected: ${conn.connection.host}`)
     } catch (e) {

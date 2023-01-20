@@ -38,11 +38,18 @@ const cardSchema = new mongoose.Schema({
     }], quantity: {
         type: Number, required: false,
     }
-})
+},
+    {
+        // TODO: Test query helper to find by name or name_en  https://mongoosejs.com/docs/guide.html#query-helpers
+        query: {
+            byName(name) {
+                return this.where({ name: new RegExp(name, 'i') })
+            }
+        }
+    });
 
 const cardModel = mongoose.model('Card', cardSchema);
 
-// TODO: add query helper to find by name https://mongoosejs.com/docs/guide.html#query-helpers
 module.exports = {
     cardModel, cardSchema
 };

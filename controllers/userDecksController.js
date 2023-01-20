@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
 const {cardModel} = require('../models/cardModel');
+const {compareCards} = require('../services/cardsComparator');
 
 // @desc    Get the user's decks
 // @route   GET /api/users/decks
@@ -66,57 +67,13 @@ const updateDeck = asyncHandler(async (req, res) => {
         throw new Error("user has no deck with this id");
     }
 
-    let updatedCards = [];
-
-    const newCards = req.body.cards;
-
-    // retrieve deck's cards
-    const oldCards = deck.cards;
-
-    // if the deck was empty, add everything
-    if (!oldCards.length) {
-        for (const newCard of newCards) {
-            // verify if input has 0 or less qty when there's no card
-            if (newCard['qty'] > 0) {
-                // for each newCard id, find the card model and add qty
-                const requestCard = await cardModel.findOne({
-                    _id: {$in: newCard['id']}
-                });
-                requestCard['quantity'] = newCard['qty'];
-                updatedCards.push(requestCard);
-            }
-        }
-    } else {
-        oldCards.forEach((oldCard) => {
-            let cardFound = newCards.find(card => card.id === oldCard._id);
-            if (cardFound) {
-                const newQty = oldCard.quantity + cardFound['qty'];
-                const index = newCards.indexOf(cardFound);
-                newCards.splice(index, 1);
-                if (newQty > 0) {
-                    oldCard.quantity = newQty;
-                    updatedCards.push(oldCard);
-                }
-            } else {
-                updatedCards.push(oldCard);
-            }
-        })
-
-        for (const newCard of newCards) {
-            if (newCard && newCard.qty > 0) {
-                const requestCard = await cardModel.findOne({
-                    _id: {$in: newCard['id']}
-                });
-                requestCard['quantity'] = newCard['qty'];
-                updatedCards.push(requestCard);
-            }
-        }
-    }
+    const updatedCards = await compareCards(deck.cards, req.body.cards);
 
     user.decks.id(req.body.deckId).cards = updatedCards;
+
     const result = await user.save();
 
-    // return user's cards
+    // return user
     res.json(result);
 })
 
