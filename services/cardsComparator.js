@@ -2,6 +2,7 @@ const { cardModel } = require('../models/cardModel');
 
 // NOTES: si la qty est négative ça déduit
 // ATTENTION : si y a 2x le même id dans la requête ça inscrit 2x la même carte dans la DB
+// get [{cards}] and [{cards}], return [{"_id": string, "qty": number}]
 async function compareCards(oldCards, newCards) {
     let updatedCards = [];
 

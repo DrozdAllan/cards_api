@@ -1,18 +1,18 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
-const {cardModel} = require('../models/cardModel');
-const {compareCards} = require('../services/cardsComparator');
+const { cardModel } = require('../models/cardModel');
+const { compareCards } = require('../services/cardsComparator');
 
 // @desc    Get the user's decks
 // @route   GET /api/users/decks
 // @access  Private
 const getDecks = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user).select('decks');
-    if (!user.decks.length) {
-        res.json("user has no deck")
-    } else {
-        res.json(user.decks);
-    }
+	const user = await User.findById(req.user).select('decks');
+	if (!user.decks.length) {
+		res.json("user has no deck")
+	} else {
+		res.json(user.decks);
+	}
 })
 
 // @desc    Create new deck
@@ -20,36 +20,36 @@ const getDecks = asyncHandler(async (req, res) => {
 // @access  Private
 // @example {"name": String, "cards": [{"id":  Number, "qty": Number}]}
 const createDeck = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user);
+	const user = await User.findById(req.user);
 
-    const newDeck = req.body;
+	const newDeck = req.body;
 
-    let deckCards = [];
+	let deckCards = [];
 
-    //verify if deck's name already exists
-    for (const deck of user.decks) {
-        if (newDeck.name === deck.name) {
-            res.json("a deck already exists with this name");
-            break;
-        }
-    }
+	//verify if deck's name already exists
+	for (const deck of user.decks) {
+		if (newDeck.name === deck.name) {
+			res.json("a deck already exists with this name");
+			break;
+		}
+	}
 
-    // search for every card in the new deck
-    for (const newCard of newDeck.cards) {
-        const requestCard = await cardModel.findOne({
-            _id: {$in: newCard['id']}
-        });
-        requestCard['quantity'] = newCard['qty'];
-        deckCards.push(requestCard);
-    }
+	// search for every card in the new deck
+	for (const newCard of newDeck.cards) {
+		const requestCard = await cardModel.findOne({
+			_id: { $in: newCard['id'] }
+		});
+		requestCard['quantity'] = newCard['qty'];
+		deckCards.push(requestCard);
+	}
 
-    user.decks.push({
-        'name': newDeck.name, 'cards': deckCards,
-    });
+	user.decks.push({
+		'name': newDeck.name, 'cards': deckCards,
+	});
 
-    const result = await user.save();
-    // return user
-    res.json(result['decks']);
+	const result = await user.save();
+	// return user
+	res.json(result['decks']);
 })
 
 // @desc    Update user's decks
@@ -57,26 +57,28 @@ const createDeck = asyncHandler(async (req, res) => {
 // @access  Private
 // @example {"deckId": String, "cards": [{"id": Number, "qty": Number}]}
 const updateDeck = asyncHandler(async (req, res) => {
-    // get the mongoose representation of the user
-    const user = await User.findById(req.user).select("decks");
+	// get the mongoose representation of the user
+	const user = await User.findById(req.user).select("decks");
 
-    // check if user has a deck with the requested id
-    const deck = user.decks.id(req.body.deckId);
+	// check if user has a deck with the requested id
+	const deck = user.decks.id(req.body.deckId);
 
-    if (!deck) {
-        throw new Error("user has no deck with this id");
-    }
+	if (!deck) {
+		throw new Error("user has no deck with this id");
+	}
 
-    const updatedCards = await compareCards(deck.cards, req.body.cards);
+	// INFO /!\ don't compareCards for now because the frontend doesn't do negative quantities
+	// const updatedCards = await compareCards(deck.cards, req.body.cards);
+	// user.decks.id(req.body.deckId).cards = updatedCards;
 
-    user.decks.id(req.body.deckId).cards = updatedCards;
+	user.decks.id(req.body.deckId).cards = req.body.cards;
 
-    const result = await user.save();
+	const result = await user.save();
 
-    // return user
-    res.json(result);
+	// return the updated deck
+	res.json(result.decks.id(req.body.deckId));
 })
 
 module.exports = {
-    getDecks, createDeck, updateDeck
+	getDecks, createDeck, updateDeck
 }
