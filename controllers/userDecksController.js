@@ -79,6 +79,21 @@ const updateDeck = asyncHandler(async (req, res) => {
 	res.json(result.decks.id(req.body.deckId));
 })
 
+// @desc    Delete user's decks
+// @route   DELETE /api/users/decks
+// @access  Private
+// @example {"deckId": String}
+const deleteDeck = asyncHandler(async (req, res) => {
+	// get the mongoose representation of the user
+	const user = await User.findById(req.user).select("decks");
+
+	// delete that deck then save the user object
+	user.decks.id(req.body.deckId).remove();
+	const result = await user.save();
+
+	res.json(result.decks);
+})
+
 module.exports = {
-	getDecks, createDeck, updateDeck
+	getDecks, createDeck, updateDeck, deleteDeck
 }
